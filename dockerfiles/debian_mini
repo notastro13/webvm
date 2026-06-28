@@ -1,37 +1,28 @@
 FROM --platform=linux/386 docker.io/i386/debian:buster
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Point APT to the archived mirrors (Buster is EOL)
-RUN echo "deb [trusted=yes] http://archive.debian.org/debian buster main contrib non-free" \
+# Point APT to archived mirrors
+RUN echo "deb [trusted=yes] http://debian.org buster main contrib non-free" \
   > /etc/apt/sources.list && \
-	echo "deb [trusted=yes] http://archive.debian.org/debian-security buster/updates main" \
+	echo "deb [trusted=yes] http://debian.org-security buster/updates main" \
 	>> /etc/apt/sources.list
 
+# Drastically shrink disk space by removing man pages, locales, and docs
 RUN apt-get clean && apt-get update && apt-get -y upgrade
-RUN apt-get -y install apt-utils gcc \
-	python3 vim unzip ruby nodejs \
-	fakeroot dbus base whiptail hexedit \
-	patch wamerican ucf manpages \
-	file luajit make lua5.3 dialog curl \
-	less cowsay netcat-openbsd \
-	git tmux \
-	xserver-xorg-core xinit i3-wm i3status \
-	xterm dmenu x11-xserver-utils xauth
+
+RUN apt-get -y install --no-install-recommends \
+	apt-utils gcc python3-minimal unzip ruby-mini nodejs \
+	fakeroot dbus base whiptail hexedit patch ucf \
+	file luajit make lua5.3 dialog curl less netcat-openbsd \
+	git tmux i3-wm xterm \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/*
+
 RUN useradd -m user && echo "user:password" | chpasswd
 COPY --chown=user:user ./examples /home/user/examples
 RUN chmod -R +x  /home/user/examples/lua
-# We set WORKDIR, as this gets extracted by Webvm to be used as the cwd. This is optional.
 WORKDIR /home/user/
-# We set env, as this gets extracted by Webvm. This is optional.
-ENV HOME="/home/user" TERM="xterm" USER="user" SHELL="/bin/bash" EDITOR="vim" LANG="C.UTF-8"
+ENV HOME="/home/user" TERM="xterm" USER="user" SHELL="/bin/bash" EDITOR="nano" LANG="C.UTF-8"
 RUN echo 'root:password' | chpasswd
 CMD [ "startx" ]
-RUN apt-get clean && apt-get update && apt-get -y upgrade
-RUN apt-get -y install --no-install-recommends apt-utils gcc \
-	python3 vim unzip ruby nodejs \
-	fakeroot dbus base whiptail hexedit \
-	patch wamerican ucf manpages \
-	file luajit make lua5.3 dialog curl \
-	less cowsay netcat-openbsd \
-	git tmux i3-wm xterm \
-	&& apt-get clean && rm -rf /var/lib/apt/lists/*
