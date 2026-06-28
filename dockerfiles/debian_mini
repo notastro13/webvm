@@ -26,3 +26,12 @@ WORKDIR /home/user/
 ENV HOME="/home/user" TERM="xterm" USER="user" SHELL="/bin/bash" EDITOR="vim" LANG="C.UTF-8"
 RUN echo 'root:password' | chpasswd
 CMD [ "startx" ]
+RUN apt-get clean && apt-get update && apt-get -y upgrade
+RUN apt-get -y install --no-install-recommends apt-utils gcc \
+	python3 vim unzip ruby nodejs \
+	fakeroot dbus base whiptail hexedit \
+	patch wamerican ucf manpages \
+	file luajit make lua5.3 dialog curl \
+	less cowsay netcat-openbsd \
+	git tmux i3-wm xterm \
+	&& apt-get clean && rm -rf /var/lib/apt/lists/*
