@@ -7,22 +7,25 @@ RUN echo "deb [trusted=yes] http://debian.org buster main contrib non-free" \
 	echo "deb [trusted=yes] http://debian.org-security buster/updates main" \
 	>> /etc/apt/sources.list
 
-# Drastically shrink disk space by removing man pages, locales, and docs
 RUN apt-get clean && apt-get update && apt-get -y upgrade
 
 RUN apt-get -y install --no-install-recommends \
-	apt-utils gcc python3-minimal unzip ruby-mini nodejs \
+	apt-utils gcc python3 vim unzip ruby nodejs \
 	fakeroot dbus base whiptail hexedit patch ucf \
 	file luajit make lua5.3 dialog curl less netcat-openbsd \
-	git tmux i3-wm xterm \
+	git tmux xserver-xorg-core xinit i3-wm xterm \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/*
+	&& rm -rf /usr/share/doc/* /usr/share/man/*
 
 RUN useradd -m user && echo "user:password" | chpasswd
 COPY --chown=user:user ./examples /home/user/examples
 RUN chmod -R +x  /home/user/examples/lua
+
+# Automatically launch the UI when the user terminal starts
+RUN echo "if [ -z \"\$DISPLAY\" ] && [ \"\$(tty)\" = \"/dev/tty1\" ]; then\n  startx\nfi" >> /home/user/.bashrc
+
 WORKDIR /home/user/
-ENV HOME="/home/user" TERM="xterm" USER="user" SHELL="/bin/bash" EDITOR="nano" LANG="C.UTF-8"
+ENV HOME="/home/user" TERM="xterm" USER="user" SHELL="/bin/bash" EDITOR="vim" LANG="C.UTF-8"
 RUN echo 'root:password' | chpasswd
-CMD [ "startx" ]
+CMD [ "/bin/bash" ]
